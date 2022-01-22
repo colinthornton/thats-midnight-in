@@ -14,7 +14,7 @@ jobs:
           node-version: "17"
           cache: "npm"
       - run: npm ci
-      - run: npm run build
+      - run: npm run build -- --base "/thats-midnight-in/"
       - uses: crazy-max/ghaction-github-pages@v2.5.0
         with:
           build_dir: dist/
