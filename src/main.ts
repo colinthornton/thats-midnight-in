@@ -58,8 +58,7 @@ function updateResults() {
 
 hourSelect?.addEventListener("change", updateResults);
 
-document.querySelector(
-  'label[for="hour-select"] span'
-)!.textContent = `in ${getTimeZoneName()}`;
+document.querySelector('label[for="hour-select"] span')!.textContent =
+  getTimeZoneName();
 
 updateResults();
