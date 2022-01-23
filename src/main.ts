@@ -1,64 +1,114 @@
 import { Temporal, Intl } from "@js-temporal/polyfill";
 import { IANAZones } from "./data/IANAZones";
 
-const zones: { [offset: string]: string[] } = {};
-const now = Temporal.Now.instant();
+(() => {
+  const now = Temporal.Now.instant();
+  const localOffsetString = Temporal.Now.timeZone().getOffsetStringFor?.(now);
+  const localOffset = parseOffsetString(localOffsetString);
+  const zones = generateZones();
 
-function setZone(offset: string, timeZoneName: string) {
-  if (!zones[offset]) {
-    zones[offset] = [];
+  const timeSelect = document.getElementById(
+    "time-select"
+  ) as HTMLSelectElement;
+  const timeZoneList = document.getElementById(
+    "time-zone-list"
+  ) as HTMLUListElement;
+
+  initializeInterface();
+
+  function generateZones(): { [time: string]: string[] } {
+    const zones: { [time: string]: string[] } = {};
+    IANAZones.forEach((timeZone) => {
+      try {
+        const timeZoneName = getTimeZoneName(timeZone);
+        const localTime = String(convertTimeZoneToLocalTime(timeZone));
+
+        if (!zones[localTime]) {
+          zones[localTime] = [];
+        }
+        if (zones[localTime].includes(timeZoneName)) {
+          return;
+        }
+        zones[localTime].push(timeZoneName);
+      } catch {}
+    });
+    return zones;
   }
-  if (zones[offset].includes(timeZoneName)) return;
-  zones[offset].push(timeZoneName);
-}
 
-function getTimeZoneName(timeZone?: string): string {
-  return Intl.DateTimeFormat("en", {
-    timeZone,
-    timeZoneName: "long",
-  })
-    .format(now)
-    .replace(/.*(AM|PM) (.*)$/, "$2");
-}
-
-IANAZones.forEach((timeZone) => {
-  try {
-    const tz = Temporal.TimeZone.from(timeZone);
-    const offset = tz.getOffsetStringFor?.(now);
-    if (!offset) return;
-    const timeZoneName = getTimeZoneName(timeZone);
-    setZone(offset, timeZoneName);
-  } catch {
-    return;
+  function getTimeZoneName(timeZone: string): string {
+    return Intl.DateTimeFormat("en", {
+      timeZone,
+      timeZoneName: "long",
+    })
+      .format(now)
+      .replace(/^.*(AM|PM) (.*)$/, "$2");
   }
-});
 
-const hourSelect = document.getElementById("hour-select") as HTMLSelectElement;
-const timezoneList = document.getElementById(
-  "timezone-list"
-) as HTMLUListElement;
+  function convertTimeZoneToLocalTime(timeZone: string): Temporal.PlainTime {
+    const offsetString =
+      Temporal.TimeZone.from(timeZone).getOffsetStringFor?.(now);
+    if (!offsetString) {
+      throw new Error(
+        `Failed to get offset string for time zone "${timeZone}"`
+      );
+    }
+    const zoneOffset = parseOffsetString(offsetString);
+    const localTime = Temporal.PlainTime.from("00:00")
+      .add(localOffset)
+      .subtract(zoneOffset);
+    return localTime;
+  }
 
-function updateResults() {
-  const now = new Date();
-  const localeTzOffset = now.getTimezoneOffset();
-  const offset = localeTzOffset + Number(hourSelect.value) * 60;
-  const sign = offset > 0 ? "-" : "+";
-  const hh = String(Math.floor(Math.abs(offset) / 60)).padStart(2, "0");
-  const mm = String(offset % 60).padStart(2, "0");
-  const offsetString = `${sign}${hh}:${mm}`;
-  const timezones = zones[offsetString];
+  function parseOffsetString(offsetString: string): {
+    hours: number;
+    minutes: number;
+  } {
+    const matches = offsetString.match(/(\+|-)(\d\d):(\d\d)/);
+    if (!matches) {
+      throw new Error(`Failed to parse offset string ${offsetString}`);
+    }
+    const sign = matches[1] as "+" | "-";
+    const hours = Number(matches[2]) * (sign === "+" ? 1 : -1);
+    const minutes = Number(matches[3]) * (sign === "+" ? 1 : -1);
+    return { hours, minutes };
+  }
 
-  timezoneList.innerHTML = "";
-  timezones?.forEach((timezone) => {
-    const li = document.createElement("li");
-    li.textContent = timezone;
-    timezoneList.appendChild(li);
-  });
-}
+  function updateTimeZoneList() {
+    const key = timeSelect.value;
+    const timeZoneNames = zones[key];
 
-hourSelect?.addEventListener("change", updateResults);
+    timeZoneList.innerHTML = "";
+    timeZoneNames.forEach((timeZoneName) => {
+      const li = document.createElement("li");
+      li.textContent = timeZoneName;
+      timeZoneList.appendChild(li);
+    });
+  }
 
-document.querySelector('label[for="hour-select"] span')!.textContent =
-  getTimeZoneName();
+  function initializeInterface() {
+    Object.keys(zones)
+      .sort(Temporal.PlainTime.compare)
+      .map((time) => Temporal.PlainTime.from(time))
+      .forEach((time) => {
+        const formattedTime = Intl.DateTimeFormat("en", {
+          timeStyle: "short",
+        }).format(time);
 
-updateResults();
+        const option = document.createElement("option");
+        option.value = String(time);
+        option.textContent = formattedTime;
+        timeSelect.appendChild(option);
+      });
+
+    timeSelect.addEventListener("change", updateTimeZoneList);
+    updateTimeZoneList();
+    const timeSelectLabel = document.querySelector(
+      'label[for="time-select"]'
+    ) as HTMLLabelElement;
+    timeSelectLabel.textContent = `in ${Intl.DateTimeFormat("en", {
+      timeZoneName: "long",
+    })
+      .format(now)
+      .replace(/^.*(AM|PM) (.*)$/, "$2")}?`;
+  }
+})();
