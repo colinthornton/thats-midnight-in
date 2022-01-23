@@ -65,6 +65,15 @@ select {
   line-height: inherit;
 }
 
+a {
+  text-decoration: underline dashed currentColor;
+  color: inherit;
+}
+
+a:hover {
+  text-decoration-style: solid;
+}
+
 .header {
   background: #1b273a;
   height: 4.05em;

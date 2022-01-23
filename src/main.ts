@@ -78,6 +78,7 @@ import { IANAZones } from "./data/IANAZones";
     const timeZoneNames = zones[key];
 
     timeZoneList.innerHTML = "";
+    if (!timeZoneNames) return;
     timeZoneNames.forEach((timeZoneName) => {
       const li = document.createElement("li");
       li.textContent = timeZoneName;
