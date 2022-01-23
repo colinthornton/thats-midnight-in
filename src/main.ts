@@ -105,10 +105,10 @@ import { IANAZones } from "./data/IANAZones";
     const timeSelectLabel = document.querySelector(
       'label[for="time-select"]'
     ) as HTMLLabelElement;
-    timeSelectLabel.textContent = `in ${Intl.DateTimeFormat("en", {
+    timeSelectLabel.textContent = Intl.DateTimeFormat("en", {
       timeZoneName: "long",
     })
       .format(now)
-      .replace(/^.*(AM|PM) (.*)$/, "$2")}?`;
+      .replace(/^.*(AM|PM) (.*)$/, "$2");
   }
 })();

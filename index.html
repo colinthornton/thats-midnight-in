@@ -4,14 +4,28 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>That's midnight in...</title>
+    <link rel="stylesheet" href="/src/style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
-    <select id="time-select"></select>
-    <label for="time-select"></label>
-    <section>
-      <header>That's midnight in:</header>
-      <ul id="time-zone-list"></ul>
-    </section>
+    <header class="header">
+      <h1>That's midnight in</h1>
+    </header>
+    <main>
+      <form class="time-select-form">
+        <label for="time-select"></label>
+        <select id="time-select"></select>
+      </form>
+      <section class="results">
+        <header>That's midnight in...</header>
+        <ul id="time-zone-list"></ul>
+      </section>
+    </main>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
