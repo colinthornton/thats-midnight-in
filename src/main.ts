@@ -1,27 +1,36 @@
 import { Temporal, Intl } from "@js-temporal/polyfill";
 import { IANAZones } from "./data/IANAZones";
 
+interface TimeToZonesMap {
+  [time: string]: string[];
+}
+
 (() => {
-  const now = Temporal.Now.instant();
-  const localOffsetString = Temporal.Now.timeZone().getOffsetStringFor?.(now);
-  const localOffset = parseOffsetString(localOffsetString);
-  const zones = generateZones();
-
-  const timeSelect = document.getElementById(
-    "time-select"
-  ) as HTMLSelectElement;
-  const timeZoneList = document.getElementById(
-    "time-zone-list"
-  ) as HTMLUListElement;
-
   initializeInterface();
 
-  function generateZones(): { [time: string]: string[] } {
+  function initializeInterface() {
+    const timeSelect = document.getElementById(
+      "time-select"
+    ) as HTMLSelectElement;
+
+    const zones = generateZones();
+    setLocalTimeZone();
+    setTimeSelectOption(zones, timeSelect);
+    timeSelect.addEventListener("change", () =>
+      updateTimeZoneList(zones, timeSelect)
+    );
+    updateTimeZoneList(zones, timeSelect);
+  }
+
+  /**
+   * Generate a map of local times to their corresponding midnight time zones
+   */
+  function generateZones(): TimeToZonesMap {
     const zones: { [time: string]: string[] } = {};
     IANAZones.forEach((timeZone) => {
       try {
         const timeZoneName = getTimeZoneName(timeZone);
-        const localTime = String(convertTimeZoneToLocalTime(timeZone));
+        const localTime = String(getLocalTime(timeZone));
 
         if (!zones[localTime]) {
           zones[localTime] = [];
@@ -35,58 +44,67 @@ import { IANAZones } from "./data/IANAZones";
     return zones;
   }
 
-  function getTimeZoneName(timeZone: string): string {
-    return Intl.DateTimeFormat("en", {
+  /**
+   * Converts the IANA `timeZone` to its full time zone name.
+   * If `timeZone` is not specified, returns the local time zone name.
+   */
+  function getTimeZoneName(timeZone?: string): string {
+    const parts = Intl.DateTimeFormat("en", {
       timeZone,
       timeZoneName: "long",
-    })
-      .format(now)
-      .replace(/^.*(AM|PM) (.*)$/, "$2");
+    }).formatToParts(Temporal.Now.instant());
+    const timeZoneNamePart = parts.find(({ type }) => type === "timeZoneName");
+    if (!timeZoneNamePart) {
+      throw new Error("Failed to get time zone name");
+    }
+    return timeZoneNamePart.value;
   }
 
-  function convertTimeZoneToLocalTime(timeZone: string): Temporal.PlainTime {
-    const offsetString =
-      Temporal.TimeZone.from(timeZone).getOffsetStringFor?.(now);
-    if (!offsetString) {
-      throw new Error(
-        `Failed to get offset string for time zone "${timeZone}"`
-      );
-    }
-    const zoneOffset = parseOffsetString(offsetString);
-    const localTime = Temporal.PlainTime.from("00:00")
-      .add(localOffset)
-      .subtract(zoneOffset);
+  /**
+   * Get the local time that corresponds to the IANA `timeZone`'s midnight
+   */
+  function getLocalTime(timeZone: string): Temporal.PlainTime {
+    const localOffset = getTimeZoneOffset(Temporal.Now.timeZone());
+    const targetOffset = getTimeZoneOffset(new Temporal.TimeZone(timeZone));
+    const midnight = Temporal.PlainTime.from("00:00:00");
+    const localTime = midnight.add(localOffset).subtract(targetOffset);
     return localTime;
   }
 
-  function parseOffsetString(offsetString: string): {
+  /**
+   * Get the offset from UTC of IANA `timeZone` in hours and minutes
+   */
+  function getTimeZoneOffset(timeZone: Temporal.TimeZone): {
     hours: number;
     minutes: number;
   } {
+    const offsetString = timeZone.getOffsetStringFor(Temporal.Now.instant());
     const matches = offsetString.match(/(\+|-)(\d\d):(\d\d)/);
     if (!matches) {
       throw new Error(`Failed to parse offset string ${offsetString}`);
     }
-    const sign = matches[1] as "+" | "-";
-    const hours = Number(matches[2]) * (sign === "+" ? 1 : -1);
-    const minutes = Number(matches[3]) * (sign === "+" ? 1 : -1);
+    const sign = matches[1];
+    const hours = Number(`${sign}${matches[2]}`);
+    const minutes = Number(`${sign}${matches[3]}`);
     return { hours, minutes };
   }
 
-  function updateTimeZoneList() {
-    const key = timeSelect.value;
-    const timeZoneNames = zones[key];
-
-    timeZoneList.innerHTML = "";
-    if (!timeZoneNames) return;
-    timeZoneNames.forEach((timeZoneName) => {
-      const li = document.createElement("li");
-      li.textContent = timeZoneName;
-      timeZoneList.appendChild(li);
-    });
+  /**
+   * Set local time zone display
+   */
+  function setLocalTimeZone() {
+    const label = document.querySelector('label[for="time-select"]');
+    if (!label) return;
+    label.textContent = getTimeZoneName();
   }
 
-  function initializeInterface() {
+  /**
+   * Set time select options
+   */
+  function setTimeSelectOption(
+    zones: TimeToZonesMap,
+    timeSelect: HTMLSelectElement
+  ) {
     Object.keys(zones)
       .sort(Temporal.PlainTime.compare)
       .map((time) => Temporal.PlainTime.from(time))
@@ -100,16 +118,28 @@ import { IANAZones } from "./data/IANAZones";
         option.textContent = formattedTime;
         timeSelect.appendChild(option);
       });
+  }
 
-    timeSelect.addEventListener("change", updateTimeZoneList);
-    updateTimeZoneList();
-    const timeSelectLabel = document.querySelector(
-      'label[for="time-select"]'
-    ) as HTMLLabelElement;
-    timeSelectLabel.textContent = Intl.DateTimeFormat("en", {
-      timeZoneName: "long",
-    })
-      .format(now)
-      .replace(/^.*(AM|PM) (.*)$/, "$2");
+  /**
+   * Update time zones displayed in result list
+   */
+  function updateTimeZoneList(
+    zones: TimeToZonesMap,
+    timeSelect: HTMLSelectElement
+  ) {
+    const timeZoneList = document.getElementById(
+      "time-zone-list"
+    ) as HTMLUListElement;
+
+    const key = timeSelect.value;
+    const timeZoneNames = zones[key];
+
+    timeZoneList.innerHTML = "";
+    if (!timeZoneNames) return;
+    timeZoneNames.forEach((timeZoneName) => {
+      const li = document.createElement("li");
+      li.textContent = timeZoneName;
+      timeZoneList.appendChild(li);
+    });
   }
 })();
