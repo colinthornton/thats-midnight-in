@@ -1,5 +1,8 @@
-* {
+*,
+*::before,
+*::after {
   box-sizing: inherit;
+  background-repeat: no-repeat;
 }
 
 html {
@@ -29,8 +32,9 @@ h1 {
 
 li {
   list-style: none;
-  display: flex;
+  display: grid;
   align-items: center;
+  grid-template-columns: auto 1fr;
 }
 
 li::before {
@@ -54,6 +58,12 @@ select {
   font-size: inherit;
   cursor: inherit;
   line-height: inherit;
+}
+
+body {
+  display: grid;
+  grid-template-rows: 4.05em 1fr 20px;
+  padding-bottom: 16px;
 }
 
 .header {
@@ -91,7 +101,8 @@ select {
 main {
   padding: 48px;
   display: grid;
-  place-items: center;
+  align-content: start;
+  justify-items: center;
 }
 
 .time-select-form {
@@ -156,4 +167,47 @@ main {
 
 .results li {
   margin-bottom: 16px;
+}
+
+footer {
+  text-align: center;
+  font-family: sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+@media (max-width: 640px) {
+  main {
+    padding-right: 40px;
+    padding-left: 40px;
+  }
+
+  .time-select-form {
+    width: 100%;
+  }
+
+  .time-select-form select {
+    width: 100%;
+  }
+
+  .results {
+    width: 100%;
+  }
+
+  .results header {
+    font-size: 24px;
+    line-height: 32px;
+  }
+
+  .results ul {
+    padding-left: 0;
+  }
+}
+
+@media (max-width: 400px) {
+  .results header {
+    font-size: 18px;
+    line-height: 24px;
+  }
 }
