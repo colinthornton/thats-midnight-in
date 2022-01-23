@@ -5,15 +5,15 @@
   background-repeat: no-repeat;
 }
 
-html {
-  box-sizing: border-box;
-}
-
 html,
 body {
   margin: 0;
   padding: 0;
   width: 100%;
+}
+
+html {
+  box-sizing: border-box;
   height: 100%;
 }
 
@@ -23,6 +23,11 @@ body {
   letter-spacing: -0.01em;
   color: rgba(255, 255, 255, 0.8);
   background: #061122;
+
+  display: grid;
+  grid-template-rows: 4.05em 1fr 20px;
+  padding-bottom: 16px;
+  min-height: 100%;
 }
 
 h1 {
@@ -58,12 +63,6 @@ select {
   font-size: inherit;
   cursor: inherit;
   line-height: inherit;
-}
-
-body {
-  display: grid;
-  grid-template-rows: 4.05em 1fr 20px;
-  padding-bottom: 16px;
 }
 
 .header {
