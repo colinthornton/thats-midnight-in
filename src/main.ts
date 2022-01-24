@@ -25,7 +25,7 @@ function initializeInterface() {
  * Generate a map of local times to their corresponding midnight time zones
  */
 function generateZones(): TimeToZonesMap {
-  const zones: { [time: string]: string[] } = {};
+  const zones: TimeToZonesMap = {};
   IANAZones.forEach((timeZone) => {
     try {
       const timeZoneName = getTimeZoneName(timeZone);
