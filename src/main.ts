@@ -8,17 +8,18 @@ interface TimeToZonesMap {
 initializeInterface();
 
 function initializeInterface() {
+  const zones = generateZones();
   const timeSelect = document.getElementById(
     "time-select"
   ) as HTMLSelectElement;
 
-  const zones = generateZones();
   setLocalTimeZone();
   setTimeSelectOptions(zones, timeSelect);
+  selectMostRecentTime(zones, timeSelect);
+  updateTimeZoneList(zones, timeSelect);
   timeSelect.addEventListener("change", () =>
     updateTimeZoneList(zones, timeSelect)
   );
-  updateTimeZoneList(zones, timeSelect);
 }
 
 /**
@@ -105,8 +106,8 @@ function setTimeSelectOptions(
   timeSelect: HTMLSelectElement
 ) {
   Object.keys(zones)
-    .sort(Temporal.PlainTime.compare)
     .map((time) => Temporal.PlainTime.from(time))
+    .sort(Temporal.PlainTime.compare)
     .forEach((time) => {
       const formattedTime = Intl.DateTimeFormat(navigator.language, {
         timeStyle: "short",
@@ -117,6 +118,21 @@ function setTimeSelectOptions(
       option.textContent = formattedTime;
       timeSelect.appendChild(option);
     });
+}
+
+/**
+ * Select the most recent local time key from `zones`
+ */
+function selectMostRecentTime(
+  zones: TimeToZonesMap,
+  timeSelect: HTMLSelectElement
+): void {
+  const currentTime = Temporal.Now.plainTimeISO();
+  const mostRecentTime = Object.keys(zones)
+    .sort((a, b) => Temporal.PlainTime.compare(b, a))
+    .find((time) => Temporal.PlainTime.compare(time, currentTime) < 0);
+  if (!mostRecentTime) return;
+  timeSelect.value = mostRecentTime;
 }
 
 /**
