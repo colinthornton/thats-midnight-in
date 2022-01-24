@@ -48,7 +48,7 @@ function generateZones(): TimeToZonesMap {
  * If `timeZone` is not specified, returns the local time zone name.
  */
 function getTimeZoneName(timeZone?: string): string {
-  const parts = Intl.DateTimeFormat("en", {
+  const parts = Intl.DateTimeFormat(navigator.language, {
     timeZone,
     timeZoneName: "long",
   }).formatToParts(Temporal.Now.instant());
@@ -108,7 +108,7 @@ function setTimeSelectOptions(
     .sort(Temporal.PlainTime.compare)
     .map((time) => Temporal.PlainTime.from(time))
     .forEach((time) => {
-      const formattedTime = Intl.DateTimeFormat("en", {
+      const formattedTime = Intl.DateTimeFormat(navigator.language, {
         timeStyle: "short",
       }).format(time);
 
