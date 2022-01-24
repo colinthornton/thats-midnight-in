@@ -250,7 +250,6 @@ export const IANAZones = [
   "Europe/Belgrade",
   "Europe/Kaliningrad",
   "Europe/Moscow",
-  "RU",
   "Europe/Simferopol",
   "Europe/Kirov",
   "Europe/Volgograd",
